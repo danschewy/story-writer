@@ -40,9 +40,9 @@ export function CreateSessionDialog({
     async function checkAuth() {
       try {
         const {
-          data: { session },
+          data: { user },
           error,
-        } = await supabase.auth.getSession();
+        } = await supabase.auth.getUser();
 
         if (error) {
           console.error("Auth error:", error);
@@ -50,14 +50,14 @@ export function CreateSessionDialog({
           return;
         }
 
-        if (!session?.user) {
-          console.log("No session found");
+        if (!user) {
+          console.log("No user found");
           router.push("/");
           return;
         }
 
-        console.log("User authenticated:", session.user);
-        setUser(session.user);
+        console.log("User authenticated:", user);
+        setUser(user);
       } catch (error) {
         console.error("Error checking auth:", error);
         router.push("/");
@@ -68,7 +68,7 @@ export function CreateSessionDialog({
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!session?.user) {
         router.push("/");
         return;

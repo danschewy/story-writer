@@ -12,40 +12,35 @@ export async function createSession(topic: string): Promise<string> {
   const supabase = await createClient();
   console.log("Server: Created server client");
 
-  console.log("Server: Attempting to get session...");
+  console.log("Server: Attempting to get user...");
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  console.log("Server: getSession result:", {
-    hasSession: !!session,
-    error: sessionError,
-    sessionData: session
+  console.log("Server: getUser result:", {
+    hasUser: !!user,
+    error: userError,
+    userData: user
       ? {
-          user: session.user
-            ? {
-                id: session.user.id,
-                email: session.user.email,
-                role: session.user.role,
-              }
-            : null,
-          expires_at: session.expires_at,
+          id: user.id,
+          email: user.email,
+          role: user.role,
         }
       : null,
   });
 
-  if (sessionError) {
-    console.error("Server: Session error:", sessionError);
+  if (userError) {
+    console.error("Server: User error:", userError);
     throw new Error("Authentication required");
   }
 
-  if (!session?.user) {
-    console.error("Server: No session or user found");
+  if (!user) {
+    console.error("Server: No user found");
     throw new Error("Authentication required");
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
   console.log("Server: User authenticated:", { userId });
 
   const sessionId = nanoid(10);
@@ -73,9 +68,7 @@ export async function createSession(topic: string): Promise<string> {
     content: topic,
     author_id: userId,
     author_name:
-      session.user.user_metadata?.full_name ||
-      session.user.email?.split("@")[0] ||
-      "Anonymous",
+      user.user_metadata?.full_name || user.email?.split("@")[0] || "Anonymous",
     timestamp: new Date().toISOString(),
     type: "text",
   });
@@ -92,15 +85,15 @@ export async function createSession(topic: string): Promise<string> {
 export async function getUserSessions(): Promise<Session[]> {
   const supabase = await createClient();
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (sessionError || !session?.user) {
+  if (userError || !user) {
     return [];
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   const { data: sessions, error } = await supabase
     .from("sessions")
@@ -330,12 +323,12 @@ export async function generateImageForStory(
   try {
     const supabase = await createClient();
     const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
 
-    if (sessionError || !session?.user) {
-      console.error("Authentication error:", { sessionError, session });
+    if (userError || !user) {
+      console.error("Authentication error:", { userError, user });
       return null;
     }
 
@@ -363,7 +356,7 @@ export async function generateImageForStory(
     const blob = new Blob(byteArrays, { type: "image/png" });
 
     // Upload to Supabase Storage with proper path structure
-    const fileName = `${session.user.id}/${sessionId}/${nanoid()}.png`;
+    const fileName = `${user.id}/${sessionId}/${nanoid()}.png`;
     const { data, error } = await supabase.storage
       .from("story-images")
       .upload(fileName, blob, {
@@ -399,16 +392,16 @@ export async function addStoryPart(
 ): Promise<boolean> {
   const supabase = await createClient();
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (sessionError || !session?.user) {
-    console.error("Authentication error:", { sessionError, session });
+  if (userError || !user) {
+    console.error("Authentication error:", { userError, user });
     return false;
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   console.log("Adding story part:", {
     sessionId,
@@ -423,9 +416,7 @@ export async function addStoryPart(
     content,
     author_id: userId,
     author_name:
-      session.user.user_metadata?.full_name ||
-      session.user.email?.split("@")[0] ||
-      "Anonymous",
+      user.user_metadata?.full_name || user.email?.split("@")[0] || "Anonymous",
     timestamp: new Date().toISOString(),
     type,
     image_url: imageUrl,
@@ -442,16 +433,16 @@ export async function addStoryPart(
 export async function completeStory(sessionId: string): Promise<boolean> {
   const supabase = await createClient();
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (sessionError || !session?.user) {
-    console.error("Authentication error:", { sessionError, session });
+  if (userError || !user) {
+    console.error("Authentication error:", { userError, user });
     return false;
   }
 
-  const userId = session.user.id;
+  const userId = user.id;
 
   console.log("Completing story:", { sessionId, userId });
 

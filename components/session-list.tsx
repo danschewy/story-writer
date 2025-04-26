@@ -15,24 +15,68 @@ import Link from "next/link";
 import { getUserSessions } from "@/lib/actions";
 import type { Session } from "@/lib/types";
 import Image from "next/image";
+import { supabase } from "@/lib/supabase";
 
 export function SessionList() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchSessions() {
       try {
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+          console.error("Auth error:", userError);
+          setError("Authentication required");
+          return;
+        }
+
         const userSessions = await getUserSessions();
-        setSessions(userSessions);
+        if (isMounted) {
+          setSessions(userSessions);
+          setIsLoading(false);
+        }
       } catch (error) {
         console.error("Failed to fetch sessions:", error);
-      } finally {
+        setError("Failed to load sessions");
         setIsLoading(false);
       }
     }
 
     fetchSessions();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+        if (!error && user) {
+          const userSessions = await getUserSessions();
+          if (isMounted) {
+            setSessions(userSessions);
+          }
+        }
+      } else {
+        if (isMounted) {
+          setSessions([]);
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   if (isLoading) {
@@ -47,6 +91,16 @@ export function SessionList() {
             </CardContent>
           </Card>
         ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <BookOpen className="h-12 w-12 text-red-500 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Error loading sessions</h2>
+        <p className="text-red-500">{error}</p>
       </div>
     );
   }

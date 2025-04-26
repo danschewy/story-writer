@@ -12,51 +12,54 @@ interface LoginButtonProps {
 }
 
 export function LoginButton({ size = "default" }: LoginButtonProps) {
-  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoading(false);
+      if (user) {
         router.push("/dashboard");
       }
     });
-
-    return () => subscription.unsubscribe();
   }, [router]);
 
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.push("/");
-  }
+  const handleLogin = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-  if (user) {
+      if (error) {
+        console.error("Error signing in:", error);
+      }
+    } catch (error) {
+      console.error("Error signing in:", error);
+    }
+  };
+
+  if (isLoading) {
     return (
-      <Button variant="outline" size={size} onClick={handleSignOut}>
-        <LogOut className="mr-2 h-4 w-4" />
-        Sign Out
+      <Button
+        variant="outline"
+        size={size}
+        className="border-amber-200 hover:bg-amber-50"
+        disabled
+      >
+        <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
       </Button>
     );
   }
 
   return (
     <Button
+      variant="outline"
       size={size}
-      onClick={() =>
-        supabase.auth.signInWithOAuth({
-          provider: "google",
-          options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
-          },
-        })
-      }
+      onClick={handleLogin}
+      className="border-amber-200 hover:bg-amber-50"
     >
       <FcGoogle className="mr-2 h-5 w-5" />
       Sign in with Google

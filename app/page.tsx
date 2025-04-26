@@ -4,47 +4,73 @@ import { LoginButton } from "@/components/login-button";
 import { BookOpen, Feather, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get("redirect");
 
   useEffect(() => {
+    let isMounted = true;
+
     async function checkAuth() {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
+      try {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
 
-      if (error) {
-        console.error("Home: getSession error", error);
-      }
+        if (!isMounted) return;
 
-      if (session?.user) {
-        console.log("Home: Valid session found, redirecting to /dashboard");
-        router.push("/dashboard");
-      } else {
-        console.log("Home: No valid session, showing login");
+        if (error) {
+          console.error("Home: getUser error", error);
+        }
+
+        if (user) {
+          console.log(
+            "Home: Valid user found, redirecting to",
+            redirectUrl || "/dashboard"
+          );
+          router.push(redirectUrl || "/dashboard");
+        } else {
+          console.log("Home: No valid user, showing login");
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error("Home: Error in checkAuth:", error);
+        setLoading(false);
       }
-      setLoading(false);
     }
 
     checkAuth();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        console.log(
-          "Home: onAuthStateChange - signed in, redirecting to /dashboard"
-        );
-        router.push("/dashboard");
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
+
+      if (session) {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+        if (!error && user) {
+          console.log(
+            "Home: onAuthStateChange - signed in, redirecting to",
+            redirectUrl || "/dashboard"
+          );
+          router.push(redirectUrl || "/dashboard");
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [router]);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router, redirectUrl]);
 
   if (loading) {
     return (

@@ -13,22 +13,48 @@ export function CreateSessionButton() {
   const router = useRouter();
 
   useEffect(() => {
+    let isMounted = true;
+
     async function checkAuth() {
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error("Auth error:", error);
+        return;
+      }
+
+      setUser(user);
     }
 
     checkAuth();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
+
+      if (session) {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+        if (!error && user) {
+          setUser(user);
+        }
+      } else {
+        setUser(null);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleClick = () => {
