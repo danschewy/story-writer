@@ -152,14 +152,53 @@ export async function getUserSessions(): Promise<Session[]> {
 export async function getSession(sessionId: string) {
   const supabase = await createClient();
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (sessionError || !session?.user) {
+  if (userError || !user) {
+    console.error("Authentication error:", { userError, user });
     return null;
   }
 
+  // First check if the session exists and user has access
+  const { data: sessionExists, error: existsError } = await supabase
+    .from("sessions")
+    .select("id, created_by, participants")
+    .eq("id", sessionId)
+    .single();
+
+  console.log("Session exists check:", {
+    exists: !!sessionExists,
+    error: existsError,
+    data: sessionExists,
+  });
+
+  if (existsError) {
+    console.error("Error checking session existence:", existsError);
+    return null;
+  }
+
+  if (!sessionExists) {
+    console.error("Session not found:", sessionId);
+    return null;
+  }
+
+  // Check if user has access to the session
+  const hasAccess =
+    sessionExists.created_by === user.id ||
+    sessionExists.participants?.includes(user.id);
+
+  if (!hasAccess) {
+    console.error("User does not have access to session:", {
+      userId: user.id,
+      createdBy: sessionExists.created_by,
+      participants: sessionExists.participants,
+    });
+    return null;
+  }
+
+  // Then fetch the full session data
   const { data: storySession, error } = await supabase
     .from("sessions")
     .select(
@@ -179,24 +218,24 @@ export async function getSession(sessionId: string) {
     .eq("id", sessionId)
     .single();
 
+  console.log("Full session data:", {
+    hasData: !!storySession,
+    error,
+    id: storySession?.id,
+    parts: storySession?.story_parts?.length,
+  });
+
   if (error || !storySession) {
     console.error("Error fetching session:", error);
     return null;
   }
 
-  console.log("Fetched session data:", {
-    id: storySession.id,
-    isComplete: storySession.is_complete,
-    title: storySession.title,
-    parts: storySession.story_parts,
-  });
-
   // Add user to participants if not already there
-  if (!storySession.participants?.includes(session.user.id)) {
+  if (!storySession.participants?.includes(user.id)) {
     const { error: updateError } = await supabase
       .from("sessions")
       .update({
-        participants: [...(storySession.participants || []), session.user.id],
+        participants: [...(storySession.participants || []), user.id],
       })
       .eq("id", sessionId);
 
@@ -210,13 +249,13 @@ export async function getSession(sessionId: string) {
     parts: storySession.story_parts,
     isComplete: storySession.is_complete,
     currentUser: {
-      id: session.user.id,
+      id: user.id,
       name:
-        session.user.user_metadata?.full_name ||
-        session.user.email?.split("@")[0] ||
+        user.user_metadata?.full_name ||
+        user.email?.split("@")[0] ||
         "Anonymous",
     },
-    isCreator: storySession.created_by === session.user.id,
+    isCreator: storySession.created_by === user.id,
   };
 }
 
@@ -226,12 +265,12 @@ export async function generateStoryPaths(
 ): Promise<StoryPath[]> {
   const supabase = await createClient();
   const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  if (sessionError || !session?.user) {
-    console.error("Authentication error:", { sessionError, session });
+  if (userError || !user) {
+    console.error("Authentication error:", { userError, user });
     return [];
   }
 
@@ -246,22 +285,37 @@ export async function generateStoryPaths(
       throw new Error("No base URL available");
     }
 
+    console.log(
+      "Generating paths for session:",
+      sessionId,
+      "with context:",
+      context
+    );
     const response = await fetch(`${baseUrl}/api/generate-paths`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${
+          (
+            await supabase.auth.getSession()
+          ).data.session?.access_token
+        }`,
       },
+      credentials: "include",
       body: JSON.stringify({
         sessionId,
         context,
       }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new Error("Failed to generate paths");
+      console.error("Failed to generate paths:", data);
+      throw new Error(data.error || "Failed to generate paths");
     }
 
-    const data = await response.json();
+    console.log("Generated paths:", data);
     return data.paths;
   } catch (error) {
     console.error("Error generating paths:", error);
