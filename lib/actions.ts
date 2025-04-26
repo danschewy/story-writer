@@ -113,7 +113,9 @@ export async function getUserSessions(): Promise<Session[]> {
       created_by,
       participants,
       story_parts (
-        timestamp
+        timestamp,
+        type,
+        image_url
       )
     `
     )
@@ -124,16 +126,27 @@ export async function getUserSessions(): Promise<Session[]> {
     return [];
   }
 
-  return sessions.map((s) => ({
-    id: s.id,
-    title: s.title,
-    createdAt: s.created_at,
-    participantCount: s.participants?.length || 1,
-    lastUpdate:
-      s.story_parts?.[s.story_parts.length - 1]?.timestamp || s.created_at,
-    isComplete: s.is_complete,
-    createdBy: s.created_by,
-  }));
+  return sessions.map((s) => {
+    // Find the latest image from story parts
+    const latestImage = s.story_parts
+      ?.filter((part: any) => part.type === "image" && part.image_url)
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      )[0];
+
+    return {
+      id: s.id,
+      title: s.title,
+      createdAt: s.created_at,
+      participantCount: s.participants?.length || 1,
+      lastUpdate:
+        s.story_parts?.[s.story_parts.length - 1]?.timestamp || s.created_at,
+      isComplete: s.is_complete,
+      createdBy: s.created_by,
+      latestImage: latestImage?.image_url,
+    };
+  });
 }
 
 export async function getSession(sessionId: string) {
@@ -172,13 +185,10 @@ export async function getSession(sessionId: string) {
   }
 
   console.log("Fetched session data:", {
-    sessionId,
-    parts: storySession.story_parts.map((part: any) => ({
-      id: part.id,
-      type: part.type,
-      content: part.content,
-      imageUrl: part.image_url,
-    })),
+    id: storySession.id,
+    isComplete: storySession.is_complete,
+    title: storySession.title,
+    parts: storySession.story_parts,
   });
 
   // Add user to participants if not already there
@@ -198,6 +208,7 @@ export async function getSession(sessionId: string) {
   return {
     ...storySession,
     parts: storySession.story_parts,
+    isComplete: storySession.is_complete,
     currentUser: {
       id: session.user.id,
       name:
@@ -225,7 +236,16 @@ export async function generateStoryPaths(
   }
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    // Use the current URL if available, otherwise use the environment variable
+    const baseUrl =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_APP_URL;
+
+    if (!baseUrl) {
+      throw new Error("No base URL available");
+    }
+
     const response = await fetch(`${baseUrl}/api/generate-paths`, {
       method: "POST",
       headers: {
@@ -379,6 +399,8 @@ export async function completeStory(sessionId: string): Promise<boolean> {
 
   const userId = session.user.id;
 
+  console.log("Completing story:", { sessionId, userId });
+
   const { error } = await supabase
     .from("sessions")
     .update({ is_complete: true })
@@ -390,6 +412,7 @@ export async function completeStory(sessionId: string): Promise<boolean> {
     return false;
   }
 
+  console.log("Story completed successfully");
   return true;
 }
 

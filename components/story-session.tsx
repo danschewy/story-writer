@@ -19,6 +19,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CompletedStoryView } from "@/components/completed-story-view";
 
 interface StorySessionProps {
   session: any;
@@ -41,7 +42,20 @@ export function StorySession({ session, sessionId }: StorySessionProps) {
 
   useEffect(() => {
     setLocalSession(session);
+    console.log("Story session updated:", {
+      isComplete: session.isComplete,
+      title: session.title,
+      parts: session.parts,
+    });
   }, [session]);
+
+  useEffect(() => {
+    console.log("Rendering story session:", {
+      isComplete: localSession.isComplete,
+      title: localSession.title,
+      parts: localSession.parts,
+    });
+  }, [localSession]);
 
   useEffect(() => {
     // Log image parts for debugging
@@ -213,220 +227,228 @@ export function StorySession({ session, sessionId }: StorySessionProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{session.title}</h1>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={copyShareLink}>
-            {copied ? (
-              <Check className="mr-2 h-4 w-4" />
-            ) : (
-              <Share2 className="mr-2 h-4 w-4" />
-            )}
-            {copied ? "Copied!" : "Share"}
-          </Button>
-          {session.isCreator && !session.isComplete && (
-            <Button
-              variant="outline"
-              onClick={handleCompleteStory}
-              disabled={isLoading}
-            >
-              Mark as Complete
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {localSession.parts.map((part: any, index: number) => (
-          <Card key={part.id}>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-center mb-2">
-                <div className="text-sm text-muted-foreground">
-                  {part.authorName} •{" "}
-                  {new Date(part.timestamp).toLocaleString()}
-                </div>
-                {index === 0 && (
-                  <div className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
-                    Starting Topic
-                  </div>
+      {localSession.isComplete ? (
+        <CompletedStoryView story={localSession} />
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold text-amber-900">
+              {session.title}
+            </h1>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={copyShareLink}
+                className="border-amber-200 hover:bg-amber-50"
+              >
+                {copied ? (
+                  <Check className="mr-2 h-4 w-4 text-amber-700" />
+                ) : (
+                  <Share2 className="mr-2 h-4 w-4 text-amber-700" />
                 )}
-              </div>
-              {part.type === "image" && part.image_url ? (
-                <div className="relative w-full aspect-[4/3] mb-4">
-                  <Image
-                    src={part.image_url}
-                    alt={part.content}
-                    fill
-                    className="object-contain rounded-lg"
-                    onError={(e) => {
-                      console.error("Error loading image:", part.image_url);
-                      e.currentTarget.src = "/placeholder-image.png";
-                    }}
-                    priority
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm rounded-b-lg">
-                    {part.content}
-                  </div>
-                </div>
-              ) : (
-                <p>{part.content}</p>
+                {copied ? "Copied!" : "Share"}
+              </Button>
+              {session.isCreator && !session.isComplete && (
+                <Button
+                  variant="outline"
+                  onClick={handleCompleteStory}
+                  disabled={isLoading}
+                  className="border-amber-200 hover:bg-amber-50"
+                >
+                  Mark as Complete
+                </Button>
               )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            </div>
+          </div>
 
-      {!localSession.isComplete && (
-        <div className="space-y-4 mt-8">
-          <h2 className="text-xl font-semibold">Continue the story</h2>
+          <div className="space-y-4">
+            {localSession.parts.map((part: any, index: number) => (
+              <Card
+                key={part.id}
+                className="border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50"
+              >
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="text-sm text-amber-700">
+                      {part.authorName} •{" "}
+                      {new Date(part.timestamp).toLocaleString()}
+                    </div>
+                    {index === 0 && (
+                      <div className="text-xs px-2 py-1 bg-amber-100 text-amber-900 rounded-full">
+                        Starting Topic
+                      </div>
+                    )}
+                  </div>
+                  {part.type === "image" && part.image_url ? (
+                    <div className="relative w-full aspect-[4/3] mb-4">
+                      <Image
+                        src={part.image_url}
+                        alt={part.content}
+                        fill
+                        className="object-contain rounded-lg"
+                        onError={(e) => {
+                          console.error("Error loading image:", part.image_url);
+                          e.currentTarget.src = "/placeholder-image.png";
+                        }}
+                        priority
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm rounded-b-lg">
+                        {part.content}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-amber-900">{part.content}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-          <Tabs defaultValue="text" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="text">Add Text</TabsTrigger>
-              <TabsTrigger value="image">Add Image</TabsTrigger>
-            </TabsList>
-            <TabsContent value="text">
-              {isGenerating ? (
-                <div className="text-center py-8">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-                  <p className="mt-2 text-muted-foreground">
-                    Generating story paths...
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <RadioGroup
-                    value={selectedPath}
-                    onValueChange={setSelectedPath}
-                  >
-                    {storyPaths.map((path) => (
-                      <div key={path.id} className="flex items-start space-x-2">
+          <div className="space-y-4 mt-8">
+            <h2 className="text-xl font-semibold text-amber-900">
+              Continue the story
+            </h2>
+
+            <Tabs defaultValue="text" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-amber-100">
+                <TabsTrigger
+                  value="text"
+                  className="data-[state=active]:bg-amber-200"
+                >
+                  Add Text
+                </TabsTrigger>
+                <TabsTrigger
+                  value="image"
+                  className="data-[state=active]:bg-amber-200"
+                >
+                  Add Image
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="text">
+                {isGenerating ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-amber-700 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+                    <p className="mt-2 text-amber-700">
+                      Generating story paths...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <RadioGroup
+                      value={selectedPath}
+                      onValueChange={setSelectedPath}
+                    >
+                      {storyPaths.map((path) => (
+                        <div
+                          key={path.id}
+                          className="flex items-start space-x-2"
+                        >
+                          <RadioGroupItem
+                            value={path.content}
+                            id={path.id}
+                            className="mt-1 text-amber-700"
+                          />
+                          <Label
+                            htmlFor={path.id}
+                            className="flex-1 text-amber-900"
+                          >
+                            {path.content}
+                          </Label>
+                        </div>
+                      ))}
+                      <div className="flex items-start space-x-2">
                         <RadioGroupItem
-                          value={path.content}
-                          id={path.id}
-                          className="mt-1"
+                          value="custom"
+                          id="custom-path"
+                          className="mt-1 text-amber-700"
                         />
-                        <Label htmlFor={path.id} className="flex-1">
-                          {path.content}
+                        <Label
+                          htmlFor="custom-path"
+                          className="flex-1 text-amber-900"
+                        >
+                          Write your own continuation:
                         </Label>
                       </div>
-                    ))}
-                    <div className="flex items-start space-x-2">
-                      <RadioGroupItem
-                        value="custom"
-                        id="custom-path"
-                        className="mt-1"
-                      />
-                      <Label htmlFor="custom-path" className="flex-1">
-                        Write your own continuation:
-                      </Label>
-                    </div>
-                  </RadioGroup>
+                    </RadioGroup>
 
-                  {selectedPath === "custom" ? (
-                    <>
-                      <Textarea
-                        placeholder="Continue the story in your own words..."
-                        value={customPath}
-                        onChange={(e) => setCustomPath(e.target.value)}
-                        className="min-h-[100px]"
-                      />
+                    {selectedPath === "custom" ? (
+                      <>
+                        <Textarea
+                          placeholder="Continue the story in your own words..."
+                          value={customPath}
+                          onChange={(e) => setCustomPath(e.target.value)}
+                          className="min-h-[100px] border-amber-200 focus:border-amber-400"
+                        />
+                        <Button
+                          onClick={handleAddPart}
+                          disabled={isLoading || !customPath}
+                          className="w-full bg-amber-700 hover:bg-amber-800"
+                        >
+                          {isLoading ? "Adding..." : "Add Text"}
+                        </Button>
+                      </>
+                    ) : (
                       <Button
                         onClick={handleAddPart}
-                        disabled={isLoading || !customPath}
-                        className="w-full"
+                        disabled={isLoading || !selectedPath}
+                        className="w-full bg-amber-700 hover:bg-amber-800"
                       >
-                        {isLoading ? "Adding..." : "Add Text"}
+                        {isLoading ? "Adding..." : "Add Selected Path"}
                       </Button>
-                    </>
-                  ) : (
+                    )}
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="image">
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <Textarea
+                      placeholder="Describe the image you want to generate..."
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
+                      className="min-h-[100px] border-amber-200 focus:border-amber-400"
+                    />
                     <Button
-                      onClick={handleAddPart}
-                      disabled={isLoading || !selectedPath}
-                      className="w-full"
+                      variant="outline"
+                      onClick={handleGeneratePrompt}
+                      disabled={isGeneratingPrompt}
+                      className="shrink-0 border-amber-200 hover:bg-amber-50"
                     >
-                      {isLoading ? "Adding..." : "Add Selected Path"}
+                      {isGeneratingPrompt ? (
+                        <>
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="mr-2 h-4 w-4 text-amber-700" />
+                          Generate Prompt
+                        </>
+                      )}
                     </Button>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-            <TabsContent value="image">
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="Describe the image you want to generate..."
-                    value={imagePrompt}
-                    onChange={(e) => setImagePrompt(e.target.value)}
-                    className="min-h-[100px]"
-                  />
+                  </div>
                   <Button
-                    variant="outline"
-                    onClick={handleGeneratePrompt}
-                    disabled={isGeneratingPrompt}
-                    className="shrink-0"
+                    onClick={handleGenerateImage}
+                    disabled={isGeneratingImage || !imagePrompt}
+                    className="w-full bg-amber-700 hover:bg-amber-800"
                   >
-                    {isGeneratingPrompt ? (
+                    {isGeneratingImage ? (
                       <>
                         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        Generating...
+                        Generating Image...
                       </>
                     ) : (
                       <>
-                        <Wand2 className="mr-2 h-4 w-4" />
-                        Generate Prompt
+                        <ImageIcon className="mr-2 h-4 w-4" />
+                        Generate Image
                       </>
                     )}
                   </Button>
                 </div>
-                <Button
-                  onClick={handleGenerateImage}
-                  disabled={isGeneratingImage || !imagePrompt}
-                  className="w-full"
-                >
-                  {isGeneratingImage ? (
-                    <>
-                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      Generating Image...
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon className="mr-2 h-4 w-4" />
-                      Generate Image
-                    </>
-                  )}
-                </Button>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      )}
-
-      {localSession.isComplete && (
-        <div className="mt-8 p-4 bg-muted rounded-lg text-center">
-          <h2 className="text-xl font-semibold mb-2">Story Complete</h2>
-          <p className="text-muted-foreground">
-            This story has been marked as complete by its creator.
-          </p>
-          <Button
-            variant="outline"
-            className="mt-4"
-            onClick={() => {
-              const storyText = localSession.parts
-                .map((part: any) => part.content)
-                .join("\n\n");
-              navigator.clipboard.writeText(storyText);
-              toast({
-                title: "Story copied!",
-                description:
-                  "The complete story has been copied to your clipboard",
-              });
-            }}
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            Copy Full Story
-          </Button>
-        </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </>
       )}
     </div>
   );

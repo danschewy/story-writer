@@ -26,11 +26,11 @@ export function DashboardHeader() {
   }, []);
 
   return (
-    <header className="border-b">
-      <div className="container flex h-16 items-center justify-between">
+    <header className="border-b bg-gradient-to-r from-amber-50 to-orange-50">
+      <div className="container flex h-16 items-center justify-between px-8">
         <div className="flex items-center gap-2">
-          <BookOpen className="h-6 w-6" />
-          <span className="text-xl font-bold">StoryForge</span>
+          <BookOpen className="h-6 w-6 text-amber-700" />
+          <span className="text-xl font-bold text-amber-900">StoryHearth</span>
         </div>
         {user ? <UserNav user={user} /> : <LoginButton />}
       </div>

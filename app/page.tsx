@@ -68,70 +68,41 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="border-b">
-        <div className="container flex h-16 items-center justify-between">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-amber-50 to-orange-50">
+      <header className="border-b bg-gradient-to-r from-amber-50 to-orange-50">
+        <div className="container flex h-16 items-center justify-between px-8">
           <div className="flex items-center gap-2">
-            <BookOpen className="h-6 w-6" />
-            <span className="text-xl font-bold">StoryForge</span>
+            <BookOpen className="h-6 w-6 text-amber-700" />
+            <span className="text-xl font-bold text-amber-900">
+              StoryHearth
+            </span>
           </div>
           <LoginButton />
         </div>
       </header>
       <main className="flex-1">
-        <section className="container py-12 md:py-24 lg:py-32">
+        <section className="container py-12 md:py-24 lg:py-32 px-8">
           <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
             <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                Write stories together with AI assistance
+              <h1 className="text-4xl font-bold tracking-tighter text-amber-900 sm:text-5xl md:text-6xl">
+                Gather around the StoryHearth
               </h1>
-              <p className="text-muted-foreground md:text-xl">
-                Collaborate with friends to create unique stories. Take turns
-                adding to the narrative with AI-generated suggestions or your
-                own ideas.
+              <p className="text-amber-800 md:text-xl">
+                Share stories with friends in a cozy space. Take turns adding to
+                the narrative with AI assistance or your own creative spark.
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <LoginButton size="lg" />
               </div>
             </div>
-            <div className="flex items-center justify-center">
-              <div className="rounded-lg border bg-card p-8 shadow-sm">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bold">How it works</h3>
-                    <ul className="space-y-4">
-                      <li className="flex items-start gap-2">
-                        <Users className="mt-1 h-5 w-5 text-primary" />
-                        <div>
-                          <span className="font-medium">Create a session</span>
-                          <p className="text-sm text-muted-foreground">
-                            Start a new story and invite friends with a unique
-                            link
-                          </p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <BookOpen className="mt-1 h-5 w-5 text-primary" />
-                        <div>
-                          <span className="font-medium">Choose a topic</span>
-                          <p className="text-sm text-muted-foreground">
-                            Select from AI-generated prompts or create your own
-                          </p>
-                        </div>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <Feather className="mt-1 h-5 w-5 text-primary" />
-                        <div>
-                          <span className="font-medium">
-                            Take turns writing
-                          </span>
-                          <p className="text-sm text-muted-foreground">
-                            Continue the story with AI suggestions or your own
-                            ideas
-                          </p>
-                        </div>
-                      </li>
-                    </ul>
+            <div className="hidden lg:block">
+              <div className="relative h-[400px] w-full rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 p-8 shadow-lg">
+                <div className="absolute inset-0 bg-[url('/hearth-pattern.png')] opacity-10"></div>
+                <div className="relative h-full w-full rounded-lg border-2 border-amber-200 bg-white/50 p-6 shadow-inner">
+                  <div className="space-y-4">
+                    <div className="h-4 w-3/4 rounded bg-amber-200/50"></div>
+                    <div className="h-4 w-1/2 rounded bg-amber-200/50"></div>
+                    <div className="h-4 w-2/3 rounded bg-amber-200/50"></div>
                   </div>
                 </div>
               </div>

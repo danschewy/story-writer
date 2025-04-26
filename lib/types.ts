@@ -6,6 +6,7 @@ export interface Session {
   lastUpdate: string;
   isComplete: boolean;
   createdBy: string;
+  latestImage?: string;
 }
 
 export interface StoryPart {

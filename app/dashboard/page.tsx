@@ -91,9 +91,9 @@ export default function Dashboard() {
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />
-      <main className="flex-1 container py-6">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Your Story Sessions</h1>
+      <main className="flex-1 container py-6 px-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-bold text-amber-900">Your Stories</h1>
           <CreateSessionButton />
         </div>
         <SessionList />
