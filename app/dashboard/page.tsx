@@ -16,34 +16,39 @@ export default function Dashboard() {
     let isMounted = true;
 
     async function checkAuth() {
-      console.log("Dashboard: Running checkAuth");
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
+      try {
+        console.log("Dashboard: Running checkAuth");
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
 
-      if (!isMounted) return;
+        if (!isMounted) return;
 
-      console.log("Dashboard: getSession result:", {
-        hasSession: !!session,
-        error,
-      });
+        console.log("Dashboard: getUser result:", {
+          hasUser: !!user,
+          error,
+        });
 
-      if (error) {
-        console.error("Dashboard: getSession error", error);
+        if (error) {
+          console.error("Dashboard: getUser error", error);
+          router.push("/");
+          return;
+        }
+
+        if (!user) {
+          console.log("Dashboard: No user found, redirecting to /");
+          router.push("/");
+          return;
+        }
+
+        console.log("Dashboard: User found, setting user and loading state.");
+        setUser(user);
+        setLoading(false);
+      } catch (error) {
+        console.error("Dashboard: Error in checkAuth:", error);
         router.push("/");
-        return;
       }
-
-      if (!session) {
-        console.log("Dashboard: No session found, redirecting to /");
-        router.push("/");
-        return;
-      }
-
-      console.log("Dashboard: Session found, setting user and loading state.");
-      setUser(session.user);
-      setLoading(false);
     }
 
     checkAuth();
@@ -51,21 +56,34 @@ export default function Dashboard() {
     console.log("Dashboard: Setting up onAuthStateChange listener");
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!isMounted) return;
 
       console.log("Dashboard: onAuthStateChange triggered:", {
         event: _event,
         hasSession: !!session,
       });
-      setUser(session?.user ?? null);
 
       if (!session) {
         console.log(
           "Dashboard: onAuthStateChange - no session, redirecting to /"
         );
         router.push("/");
+        return;
       }
+
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (error || !user) {
+        console.error("Dashboard: onAuthStateChange - getUser error:", error);
+        router.push("/");
+        return;
+      }
+
+      setUser(user);
+      setLoading(false);
     });
 
     return () => {
