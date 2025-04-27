@@ -126,11 +126,12 @@ export default function SessionPage({ params }: SessionPageProps) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-amber-100 via-amber-50 to-orange-100 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
         <DashboardHeader />
-        <main className="flex-1 container py-6 px-8">
+        <main className="flex-1 relative container py-6 px-8">
           <div className="flex items-center justify-center h-[50vh]">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-amber-700 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
           </div>
         </main>
       </div>
@@ -139,21 +140,22 @@ export default function SessionPage({ params }: SessionPageProps) {
 
   if (error) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-amber-100 via-amber-50 to-orange-100 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
         <DashboardHeader />
-        <main className="flex-1 container py-6 px-8">
+        <main className="flex-1 relative container py-6 px-8">
           <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
-            <p className="text-red-600 font-bold">{error}</p>
+            <p className="text-amber-900 font-bold">{error}</p>
             <div className="flex gap-4">
               <button
                 onClick={() => router.push("/dashboard")}
-                className="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700"
+                className="px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition-colors"
               >
                 Go to Dashboard
               </button>
               <button
                 onClick={() => router.push("/")}
-                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                className="px-4 py-2 bg-white text-amber-900 border border-amber-200 rounded hover:bg-amber-50 transition-colors"
               >
                 Go to Home
               </button>
@@ -166,16 +168,17 @@ export default function SessionPage({ params }: SessionPageProps) {
 
   if (!storySession) {
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-gradient-to-b from-amber-100 via-amber-50 to-orange-100 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
         <DashboardHeader />
-        <main className="flex-1 container py-6 px-8">
+        <main className="flex-1 relative container py-6 px-8">
           <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
-            <p className="text-red-600 font-bold">
+            <p className="text-amber-900 font-bold">
               Session data is missing. Cannot display session.
             </p>
             <button
               onClick={() => router.push("/dashboard")}
-              className="px-4 py-2 bg-amber-600 text-white rounded hover:bg-amber-700"
+              className="px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition-colors"
             >
               Go to Dashboard
             </button>
@@ -186,9 +189,10 @@ export default function SessionPage({ params }: SessionPageProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-amber-100 via-amber-50 to-orange-100 relative">
+      <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-10" />
       <DashboardHeader />
-      <main className="flex-1 container py-6 px-8">
+      <main className="flex-1 relative container py-6 px-8">
         <StorySession session={storySession} sessionId={resolvedParams.id} />
       </main>
     </div>

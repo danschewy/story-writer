@@ -397,7 +397,7 @@ export function StorySession({ session, sessionId }: StorySessionProps) {
                         priority={index < 3}
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm rounded-b-lg">
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 text-sm rounded-b-lg hidden sm:block">
                         {part.content}
                       </div>
                     </div>

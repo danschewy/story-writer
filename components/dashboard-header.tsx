@@ -69,21 +69,28 @@ export function DashboardHeader() {
   }, []);
 
   return (
-    <header className="border-b">
-      <div className="container flex h-16 items-center justify-between px-8">
+    <header className="border-b bg-white/80 backdrop-blur-sm">
+      <div className="container flex h-16 items-center justify-between px-4 sm:px-8">
         <Link href="/" className="flex items-center gap-2">
           <BookOpen className="h-6 w-6 text-amber-700" />
           <span className="text-xl font-bold text-amber-900">StoryHearth</span>
         </Link>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Button
             asChild
             variant="ghost"
-            className="text-amber-700 hover:text-amber-900"
+            className="text-amber-700 hover:text-amber-900 h-10 px-3 sm:px-4"
           >
             <Link href="/completed">Completed Stories</Link>
           </Button>
-          {!isLoading && (user ? <UserNav user={user} /> : <LoginButton />)}
+          {!isLoading &&
+            (user ? (
+              <UserNav user={user} />
+            ) : (
+              <span className="hidden sm:block">
+                <LoginButton />
+              </span>
+            ))}
         </div>
       </div>
     </header>
