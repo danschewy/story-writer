@@ -143,113 +143,166 @@ export async function getUserSessions(): Promise<Session[]> {
 }
 
 export async function getSession(sessionId: string) {
+  console.log(`[getSession ${sessionId}] Starting function`);
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  console.log(`[getSession ${sessionId}] Created Supabase client`);
 
-  if (userError || !user) {
-    console.error("Authentication error:", { userError, user });
-    return null;
-  }
+  try {
+    console.log(`[getSession ${sessionId}] Attempting to get user...`);
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    console.log(`[getSession ${sessionId}] getUser result:`, {
+      hasUser: !!user,
+      error: userError,
+      userId: user?.id,
+      userEmail: user?.email,
+    });
 
-  // First check if the session exists and user has access
-  const { data: sessionExists, error: existsError } = await supabase
-    .from("sessions")
-    .select("id, created_by, participants")
-    .eq("id", sessionId)
-    .single();
+    if (userError) {
+      console.error(`[getSession ${sessionId}] User error:`, userError);
+      return null;
+    }
 
-  console.log("Session exists check:", {
-    exists: !!sessionExists,
-    error: existsError,
-    data: sessionExists,
-  });
+    if (!user) {
+      console.error(`[getSession ${sessionId}] No user found`);
+      return null;
+    }
+    console.log(`[getSession ${sessionId}] User authenticated: ${user.id}`);
 
-  if (existsError) {
-    console.error("Error checking session existence:", existsError);
-    return null;
-  }
+    // First check if the session exists and user has access
+    console.log(`[getSession ${sessionId}] Checking session existence...`);
+    const { data: sessionExists, error: existsError } = await supabase
+      .from("sessions")
+      .select("id, created_by, participants")
+      .eq("id", sessionId)
+      .single();
 
-  if (!sessionExists) {
-    console.error("Session not found:", sessionId);
-    return null;
-  }
+    console.log(`[getSession ${sessionId}] Session exists check result:`, {
+      exists: !!sessionExists,
+      error: existsError,
+      data: sessionExists,
+    });
 
-  // Check if user has access to the session
-  const hasAccess =
-    sessionExists.created_by === user.id ||
-    sessionExists.participants?.includes(user.id);
+    if (existsError) {
+      console.error(
+        `[getSession ${sessionId}] Error checking session existence:`,
+        existsError
+      );
+      return null;
+    }
 
-  if (!hasAccess) {
-    console.error("User does not have access to session:", {
+    if (!sessionExists) {
+      console.error(`[getSession ${sessionId}] Session not found.`);
+      return null;
+    }
+    console.log(`[getSession ${sessionId}] Session found.`);
+
+    // Check if user has access to the session
+    console.log(`[getSession ${sessionId}] Checking user access...`);
+    const hasAccess =
+      sessionExists.created_by === user.id ||
+      sessionExists.participants?.includes(user.id);
+
+    console.log(`[getSession ${sessionId}] Access check result:`, {
+      hasAccess,
       userId: user.id,
       createdBy: sessionExists.created_by,
       participants: sessionExists.participants,
     });
-    return null;
-  }
 
-  // Then fetch the full session data
-  const { data: storySession, error } = await supabase
-    .from("sessions")
-    .select(
-      `
-      *,
-      story_parts (
-        id,
-        content,
-        author_id,
-        author_name,
-        timestamp,
-        type,
-        image_url
-      )
-    `
-    )
-    .eq("id", sessionId)
-    .single();
-
-  console.log("Full session data:", {
-    hasData: !!storySession,
-    error,
-    id: storySession?.id,
-    parts: storySession?.story_parts?.length,
-  });
-
-  if (error || !storySession) {
-    console.error("Error fetching session:", error);
-    return null;
-  }
-
-  // Add user to participants if not already there
-  if (!storySession.participants?.includes(user.id)) {
-    const { error: updateError } = await supabase
-      .from("sessions")
-      .update({
-        participants: [...(storySession.participants || []), user.id],
-      })
-      .eq("id", sessionId);
-
-    if (updateError) {
-      console.error("Error updating participants:", updateError);
+    if (!hasAccess) {
+      console.error(`[getSession ${sessionId}] User does not have access:`, {
+        userId: user.id,
+        createdBy: sessionExists.created_by,
+        participants: sessionExists.participants,
+      });
+      return null;
     }
-  }
+    console.log(`[getSession ${sessionId}] User has access.`);
 
-  return {
-    ...storySession,
-    parts: storySession.story_parts,
-    isComplete: storySession.is_complete,
-    currentUser: {
-      id: user.id,
-      name:
-        user.user_metadata?.full_name ||
-        user.email?.split("@")[0] ||
-        "Anonymous",
-    },
-    isCreator: storySession.created_by === user.id,
-  };
+    // Then fetch the full session data
+    console.log(`[getSession ${sessionId}] Fetching full session data...`);
+    const { data: storySession, error: fetchError } = await supabase
+      .from("sessions")
+      .select(
+        `
+        *,
+        story_parts (
+          id,
+          content,
+          author_id,
+          author_name,
+          timestamp,
+          type,
+          image_url
+        )
+      `
+      )
+      .eq("id", sessionId)
+      .single();
+
+    console.log(`[getSession ${sessionId}] Full session data result:`, {
+      hasData: !!storySession,
+      error: fetchError,
+      id: storySession?.id,
+      parts: storySession?.story_parts?.length,
+    });
+
+    if (fetchError) {
+      console.error(
+        `[getSession ${sessionId}] Error fetching session:`,
+        fetchError
+      );
+      return null;
+    }
+
+    if (!storySession) {
+      console.error(`[getSession ${sessionId}] Full session data not found.`);
+      return null;
+    }
+    console.log(`[getSession ${sessionId}] Full session data fetched.`);
+
+    // Add user to participants if not already there
+    if (!storySession.participants?.includes(user.id)) {
+      console.log(`[getSession ${sessionId}] Adding user to participants...`);
+      const { error: updateError } = await supabase
+        .from("sessions")
+        .update({
+          participants: [...(storySession.participants || []), user.id],
+        })
+        .eq("id", sessionId);
+
+      if (updateError) {
+        console.error(
+          `[getSession ${sessionId}] Error updating participants:`,
+          updateError
+        );
+        // Don't block returning the session data if participant update fails
+      } else {
+        console.log(`[getSession ${sessionId}] User added to participants.`);
+      }
+    }
+
+    console.log(`[getSession ${sessionId}] Returning session data.`);
+    return {
+      ...storySession,
+      parts: storySession.story_parts,
+      isComplete: storySession.is_complete,
+      currentUser: {
+        id: user.id,
+        name:
+          user.user_metadata?.full_name ||
+          user.email?.split("@")[0] ||
+          "Anonymous",
+      },
+      isCreator: storySession.created_by === user.id,
+    };
+  } catch (error) {
+    console.error(`[getSession ${sessionId}] Unexpected error:`, error);
+    return null;
+  }
 }
 
 export async function generateStoryPaths(

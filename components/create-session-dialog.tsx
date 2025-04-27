@@ -56,7 +56,6 @@ export function CreateSessionDialog({
           return;
         }
 
-        console.log("User authenticated:", user);
         setUser(user);
       } catch (error) {
         console.error("Error checking auth:", error);

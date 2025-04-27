@@ -17,18 +17,12 @@ export default function Dashboard() {
 
     async function checkAuth() {
       try {
-        console.log("Dashboard: Running checkAuth");
         const {
           data: { user },
           error,
         } = await supabase.auth.getUser();
 
         if (!isMounted) return;
-
-        console.log("Dashboard: getUser result:", {
-          hasUser: !!user,
-          error,
-        });
 
         if (error) {
           console.error("Dashboard: getUser error", error);
@@ -37,12 +31,10 @@ export default function Dashboard() {
         }
 
         if (!user) {
-          console.log("Dashboard: No user found, redirecting to /");
           router.push("/");
           return;
         }
 
-        console.log("Dashboard: User found, setting user and loading state.");
         setUser(user);
         setLoading(false);
       } catch (error) {
@@ -53,21 +45,12 @@ export default function Dashboard() {
 
     checkAuth();
 
-    console.log("Dashboard: Setting up onAuthStateChange listener");
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!isMounted) return;
 
-      console.log("Dashboard: onAuthStateChange triggered:", {
-        event: _event,
-        hasSession: !!session,
-      });
-
       if (!session) {
-        console.log(
-          "Dashboard: onAuthStateChange - no session, redirecting to /"
-        );
         router.push("/");
         return;
       }
@@ -87,7 +70,6 @@ export default function Dashboard() {
     });
 
     return () => {
-      console.log("Dashboard: Unsubscribing from onAuthStateChange");
       isMounted = false;
       subscription.unsubscribe();
     };

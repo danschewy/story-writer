@@ -9,21 +9,41 @@ import Link from "next/link";
 
 export function DashboardHeader() {
   const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getUser().then(({ data: { user }, error }) => {
-      if (error) {
-        console.error("Auth error:", error);
-        return;
-      }
-      setUser(user);
-    });
+    let isMounted = true;
 
-    // Listen for auth changes
+    async function checkAuth() {
+      try {
+        const {
+          data: { user },
+          error,
+        } = await supabase.auth.getUser();
+
+        if (!isMounted) return;
+
+        if (error) {
+          console.error("Auth error:", error);
+          setUser(null);
+        } else {
+          setUser(user);
+        }
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error checking auth:", error);
+        setUser(null);
+        setIsLoading(false);
+      }
+    }
+
+    checkAuth();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return;
+
       if (session) {
         const {
           data: { user },
@@ -31,15 +51,20 @@ export function DashboardHeader() {
         } = await supabase.auth.getUser();
         if (error) {
           console.error("Auth error:", error);
-          return;
+          setUser(null);
+        } else {
+          setUser(user);
         }
-        setUser(user);
       } else {
         setUser(null);
       }
+      setIsLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
@@ -52,7 +77,13 @@ export function DashboardHeader() {
           <BookOpen className="h-6 w-6 text-amber-700" />
           <span className="text-xl font-bold text-amber-900">StoryHearth</span>
         </Link>
-        {user ? <UserNav user={user} /> : <LoginButton />}
+        {isLoading ? (
+          <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
+        ) : user ? (
+          <UserNav user={user} />
+        ) : (
+          <LoginButton />
+        )}
       </div>
     </header>
   );

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
 
 interface UserNavProps {
   user: {
@@ -26,8 +27,20 @@ interface UserNavProps {
 
 export function UserNav({ user }: UserNavProps) {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [userData, setUserData] = useState(user);
+
+  useEffect(() => {
+    if (user) {
+      setUserData(user);
+      setIsLoading(false);
+    }
+  }, [user]);
+
   const name =
-    user.user_metadata?.full_name || user.email?.split("@")[0] || "User";
+    userData.user_metadata?.full_name ||
+    userData.email?.split("@")[0] ||
+    "User";
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -38,13 +51,23 @@ export function UserNav({ user }: UserNavProps) {
     router.push("/");
   }
 
+  if (isLoading) {
+    return (
+      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+        <Avatar className="h-8 w-8">
+          <AvatarFallback>...</AvatarFallback>
+        </Avatar>
+      </Button>
+    );
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src={user.user_metadata?.avatar_url || ""}
+              src={userData.user_metadata?.avatar_url || ""}
               alt={name}
             />
             <AvatarFallback>{initials}</AvatarFallback>
@@ -56,7 +79,7 @@ export function UserNav({ user }: UserNavProps) {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{name}</p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
+              {userData.email}
             </p>
           </div>
         </DropdownMenuLabel>
