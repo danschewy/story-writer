@@ -45,10 +45,6 @@ export async function updateSession(request: NextRequest) {
   } else if (!user) {
     console.log("Middleware: No user found");
   } else {
-    console.log("Middleware: User authenticated:", {
-      id: user.id,
-      email: user.email,
-    });
   }
 
   return response;

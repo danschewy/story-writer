@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase-server";
+import { createClient, createAdminClient } from "@/lib/supabase-server";
 import { nanoid } from "nanoid";
 import { generateText } from "ai";
 import { openai } from "@ai-sdk/openai";
@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   try {
     const { sessionId, context } = await request.json();
     console.log(
-      "Generating paths for session:",
+      "Generating paths for session in generate-paths:",
       sessionId,
       "with context:",
       context
@@ -43,8 +43,12 @@ export async function POST(request: Request) {
       );
     }
 
+    // Use admin client to bypass RLS for fetching story parts
+    const adminClient = createAdminClient();
+    console.log("Created admin client for fetching story parts");
+
     // Get the story parts
-    const { data: storySession, error } = await supabase
+    const { data: storySession, error } = await adminClient
       .from("sessions")
       .select(
         `

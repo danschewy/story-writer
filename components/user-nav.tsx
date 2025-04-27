@@ -29,6 +29,7 @@ export function UserNav({ user }: UserNavProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState(user);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -47,8 +48,20 @@ export function UserNav({ user }: UserNavProps) {
     .join("");
 
   async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.push("/");
+    try {
+      setIsSigningOut(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Error signing out:", error);
+        return;
+      }
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    } finally {
+      setIsSigningOut(false);
+    }
   }
 
   if (isLoading) {
@@ -84,7 +97,13 @@ export function UserNav({ user }: UserNavProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut}>Log out</DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+          className="cursor-pointer"
+        >
+          {isSigningOut ? "Signing out..." : "Log out"}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
