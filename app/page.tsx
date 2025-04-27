@@ -2,11 +2,11 @@
 
 import { LoginButton } from "@/components/login-button";
 import { BookOpen, Feather, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function Home() {
+function HomeContent() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -74,68 +74,65 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <header className="border-b">
-          <div className="container flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BookOpen className="h-6 w-6" />
-              <span className="text-xl font-bold">StoryForge</span>
-            </div>
-            <div className="w-24" /> {/* Placeholder for button */}
-          </div>
-        </header>
-        <main className="flex-1">
-          <div className="flex items-center justify-center h-[50vh]">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-          </div>
-        </main>
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-amber-50 to-orange-50">
-      <header className="border-b bg-gradient-to-r from-amber-50 to-orange-50">
-        <div className="container flex h-16 items-center justify-between px-8">
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-6 w-6 text-amber-700" />
-            <span className="text-xl font-bold text-amber-900">
-              StoryHearth
-            </span>
-          </div>
-          <LoginButton />
-        </div>
-      </header>
+    <div className="flex min-h-screen flex-col">
       <main className="flex-1">
-        <section className="container py-12 md:py-24 lg:py-32 px-8">
-          <div className="grid gap-6 lg:grid-cols-2 lg:gap-12">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tighter text-amber-900 sm:text-5xl md:text-6xl">
-                Gather around the StoryHearth
-              </h1>
-              <p className="text-amber-800 md:text-xl">
-                Share stories with friends in a cozy space. Take turns adding to
-                the narrative with AI assistance or your own creative spark.
+        <div className="container flex flex-col items-center justify-center gap-4 py-24 text-center">
+          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+            Welcome to StoryHearth
+          </h1>
+          <p className="max-w-[600px] text-lg text-muted-foreground sm:text-xl">
+            Create and collaborate on stories with friends. Let your imagination
+            run wild!
+          </p>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <LoginButton size="lg" />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+              <BookOpen className="h-6 w-6" />
+              <h3 className="font-semibold">Create Stories</h3>
+              <p className="text-sm text-muted-foreground">
+                Start a new story and invite others to collaborate
               </p>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <LoginButton size="lg" />
-              </div>
             </div>
-            <div className="hidden lg:block">
-              <div className="relative h-[400px] w-full rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 p-8 shadow-lg">
-                <div className="absolute inset-0 bg-[url('/hearth-pattern.png')] opacity-10"></div>
-                <div className="relative h-full w-full rounded-lg border-2 border-amber-200 bg-white/50 p-6 shadow-inner">
-                  <div className="space-y-4">
-                    <div className="h-4 w-3/4 rounded bg-amber-200/50"></div>
-                    <div className="h-4 w-1/2 rounded bg-amber-200/50"></div>
-                    <div className="h-4 w-2/3 rounded bg-amber-200/50"></div>
-                  </div>
-                </div>
-              </div>
+            <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+              <Feather className="h-6 w-6" />
+              <h3 className="font-semibold">Write Together</h3>
+              <p className="text-sm text-muted-foreground">
+                Take turns adding to the story and watch it evolve
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+              <Users className="h-6 w-6" />
+              <h3 className="font-semibold">Share & Enjoy</h3>
+              <p className="text-sm text-muted-foreground">
+                Share your completed stories with friends and family
+              </p>
             </div>
           </div>
-        </section>
+        </div>
       </main>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col items-center justify-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }
