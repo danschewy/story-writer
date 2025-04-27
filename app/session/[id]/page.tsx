@@ -29,7 +29,34 @@ export default function SessionPage({ params }: SessionPageProps) {
 
     async function checkSessionAccess() {
       try {
-        // Step 1: Check if user is authenticated
+        // First check if the session exists and is complete
+        const { data: sessionInfo, error: sessionError } = await supabase
+          .from("sessions")
+          .select("is_complete")
+          .eq("id", resolvedParams.id)
+          .single();
+
+        if (sessionError) {
+          console.error(
+            `[SessionPage ${effectRunId}] Session error:`,
+            sessionError
+          );
+          setError("Session not found.");
+          setLoading(false);
+          return;
+        }
+
+        // If the session is complete, allow public access
+        if (sessionInfo.is_complete) {
+          const fullSessionData = await getSessionAction(resolvedParams.id);
+          if (fullSessionData) {
+            setStorySession(fullSessionData);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // For incomplete sessions, check authentication
         const {
           data: { user },
           error: authError,
@@ -49,10 +76,10 @@ export default function SessionPage({ params }: SessionPageProps) {
           return;
         }
 
-        // Step 2: Check if session exists and user has access
-        const sessionData = await getSessionAction(resolvedParams.id);
+        // Check if session exists and user has access
+        const fullSessionData = await getSessionAction(resolvedParams.id);
 
-        if (!sessionData) {
+        if (!fullSessionData) {
           console.error(
             `[SessionPage ${effectRunId}] Session not found or access denied`
           );
@@ -61,10 +88,10 @@ export default function SessionPage({ params }: SessionPageProps) {
           return;
         }
 
-        // Step 3: Verify user has access to the session
+        // Verify user has access to the session
         const hasAccess =
-          sessionData.created_by === user.id ||
-          sessionData.participants?.includes(user.id);
+          fullSessionData.created_by === user.id ||
+          fullSessionData.participants?.includes(user.id);
 
         if (!hasAccess) {
           console.error(
@@ -75,9 +102,9 @@ export default function SessionPage({ params }: SessionPageProps) {
           return;
         }
 
-        // Step 4: If all checks pass, update the session data
+        // If all checks pass, update the session data
         if (isMounted) {
-          setStorySession(sessionData);
+          setStorySession(fullSessionData);
           setLoading(false);
         }
       } catch (error) {

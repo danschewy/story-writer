@@ -4,7 +4,7 @@ import type { Session, StoryPart, StoryPath } from "@/lib/types";
 import { nanoid } from "nanoid";
 import { generateText, experimental_generateImage as generateImage } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { createClient } from "./supabase-server";
+import { createClient, createAdminClient } from "./supabase-server";
 import { requireAuth } from "./auth-helpers";
 
 export async function createSession(topic: string): Promise<string> {
@@ -124,9 +124,61 @@ export async function getUserSessions(): Promise<Session[]> {
 export async function getSession(sessionId: string) {
   console.log(`[getSession ${sessionId}] Starting function`);
   const supabase = await createClient();
-  console.log(`[getSession ${sessionId}] Created Supabase client`);
+  const adminClient = createAdminClient();
+  console.log(`[getSession ${sessionId}] Created Supabase clients`);
 
   try {
+    // First check if the session exists and is complete
+    const { data: sessionInfo, error: sessionError } = await adminClient
+      .from("sessions")
+      .select("is_complete")
+      .eq("id", sessionId)
+      .single();
+
+    if (sessionError) {
+      console.error(`[getSession ${sessionId}] Session error:`, sessionError);
+      return null;
+    }
+
+    // If the session is complete, allow public access
+    if (sessionInfo.is_complete) {
+      const { data: storySession, error: fetchError } = await adminClient
+        .from("sessions")
+        .select(
+          `
+          *,
+          story_parts (
+            id,
+            content,
+            author_id,
+            author_name,
+            timestamp,
+            type,
+            image_url
+          )
+        `
+        )
+        .eq("id", sessionId)
+        .single();
+
+      if (fetchError) {
+        console.error(
+          `[getSession ${sessionId}] Error fetching session:`,
+          fetchError
+        );
+        return null;
+      }
+
+      return {
+        ...storySession,
+        parts: storySession.story_parts,
+        isComplete: storySession.is_complete,
+        currentUser: null,
+        isCreator: false,
+      };
+    }
+
+    // For incomplete sessions, check authentication
     console.log(`[getSession ${sessionId}] Attempting to get user...`);
     const {
       data: { user },

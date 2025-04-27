@@ -409,138 +409,143 @@ export function StorySession({ session, sessionId }: StorySessionProps) {
             ))}
           </div>
 
-          <Tabs defaultValue="text" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-amber-100">
-              <TabsTrigger
-                value="text"
-                className="data-[state=active]:bg-amber-200 data-[state=active]:text-amber-900"
-              >
-                Add Text
-              </TabsTrigger>
-              <TabsTrigger
-                value="image"
-                className="data-[state=active]:bg-amber-200 data-[state=active]:text-amber-900"
-              >
-                Add Image
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="text">
-              {isGenerating ? (
-                <div className="text-center py-8">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-amber-700 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-                  <p className="mt-2 text-amber-700">
-                    Generating story paths...
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4 p-4 border border-amber-200 rounded-b-md">
-                  <RadioGroup
-                    value={selectedPath}
-                    onValueChange={setSelectedPath}
-                  >
-                    {storyPaths.map((path) => (
-                      <div key={path.id} className="flex items-start space-x-2">
+          {!localSession.isComplete && localSession.currentUser && (
+            <Tabs defaultValue="text" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-amber-100">
+                <TabsTrigger
+                  value="text"
+                  className="data-[state=active]:bg-amber-200 data-[state=active]:text-amber-900"
+                >
+                  Add Text
+                </TabsTrigger>
+                <TabsTrigger
+                  value="image"
+                  className="data-[state=active]:bg-amber-200 data-[state=active]:text-amber-900"
+                >
+                  Add Image
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="text">
+                {isGenerating ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-amber-700 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+                    <p className="mt-2 text-amber-700">
+                      Generating story paths...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 p-4 border border-amber-200 rounded-b-md">
+                    <RadioGroup
+                      value={selectedPath}
+                      onValueChange={setSelectedPath}
+                    >
+                      {storyPaths.map((path) => (
+                        <div
+                          key={path.id}
+                          className="flex items-start space-x-2"
+                        >
+                          <RadioGroupItem
+                            value={path.content}
+                            id={path.id}
+                            className="mt-1 text-amber-700"
+                          />
+                          <Label
+                            htmlFor={path.id}
+                            className="flex-1 text-amber-900 cursor-pointer"
+                          >
+                            {path.content}
+                          </Label>
+                        </div>
+                      ))}
+                      <div className="flex items-start space-x-2">
                         <RadioGroupItem
-                          value={path.content}
-                          id={path.id}
+                          value="custom"
+                          id="custom-path"
                           className="mt-1 text-amber-700"
                         />
                         <Label
-                          htmlFor={path.id}
+                          htmlFor="custom-path"
                           className="flex-1 text-amber-900 cursor-pointer"
                         >
-                          {path.content}
+                          Write your own continuation:
                         </Label>
                       </div>
-                    ))}
-                    <div className="flex items-start space-x-2">
-                      <RadioGroupItem
-                        value="custom"
-                        id="custom-path"
-                        className="mt-1 text-amber-700"
+                    </RadioGroup>
+                    {selectedPath === "custom" && (
+                      <Textarea
+                        placeholder="Write your own continuation..."
+                        value={customPath}
+                        onChange={(e) => setCustomPath(e.target.value)}
+                        className="min-h-[100px] border-amber-200 focus:border-amber-400"
                       />
-                      <Label
-                        htmlFor="custom-path"
-                        className="flex-1 text-amber-900 cursor-pointer"
-                      >
-                        Write your own continuation:
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                  {selectedPath === "custom" && (
+                    )}
+                    <Button
+                      onClick={handleAddPart}
+                      disabled={isLoading || isGenerating || !selectedPath}
+                      className="w-full bg-amber-600 hover:bg-amber-700"
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          Adding...
+                        </>
+                      ) : (
+                        "Continue Story"
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+              <TabsContent value="image">
+                <div className="space-y-4 p-4 border border-amber-200 rounded-b-md">
+                  <div className="flex gap-2">
                     <Textarea
-                      placeholder="Write your own continuation..."
-                      value={customPath}
-                      onChange={(e) => setCustomPath(e.target.value)}
+                      placeholder="Describe the image you want to generate..."
+                      value={imagePrompt}
+                      onChange={(e) => setImagePrompt(e.target.value)}
                       className="min-h-[100px] border-amber-200 focus:border-amber-400"
                     />
-                  )}
+                    <Button
+                      variant="outline"
+                      onClick={handleGeneratePrompt}
+                      disabled={isGeneratingPrompt}
+                      className="shrink-0 border-amber-200 hover:bg-amber-50 text-amber-900"
+                      title="Generate prompt suggestion based on recent story"
+                    >
+                      {isGeneratingPrompt ? (
+                        <>
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="mr-2 h-4 w-4 text-amber-700" />
+                          Suggest Prompt
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   <Button
-                    onClick={handleAddPart}
-                    disabled={isLoading || isGenerating || !selectedPath}
+                    onClick={handleGenerateImage}
+                    disabled={isGeneratingImage || !imagePrompt}
                     className="w-full bg-amber-600 hover:bg-amber-700"
                   >
-                    {isLoading ? (
-                      <>
-                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                        Adding...
-                      </>
-                    ) : (
-                      "Continue Story"
-                    )}
-                  </Button>
-                </div>
-              )}
-            </TabsContent>
-            <TabsContent value="image">
-              <div className="space-y-4 p-4 border border-amber-200 rounded-b-md">
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="Describe the image you want to generate..."
-                    value={imagePrompt}
-                    onChange={(e) => setImagePrompt(e.target.value)}
-                    className="min-h-[100px] border-amber-200 focus:border-amber-400"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={handleGeneratePrompt}
-                    disabled={isGeneratingPrompt}
-                    className="shrink-0 border-amber-200 hover:bg-amber-50 text-amber-900"
-                    title="Generate prompt suggestion based on recent story"
-                  >
-                    {isGeneratingPrompt ? (
+                    {isGeneratingImage ? (
                       <>
                         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                         Generating...
                       </>
                     ) : (
                       <>
-                        <Wand2 className="mr-2 h-4 w-4 text-amber-700" />
-                        Suggest Prompt
+                        <ImageIcon className="mr-2 h-4 w-4" />
+                        Generate & Add Image
                       </>
                     )}
                   </Button>
                 </div>
-                <Button
-                  onClick={handleGenerateImage}
-                  disabled={isGeneratingImage || !imagePrompt}
-                  className="w-full bg-amber-600 hover:bg-amber-700"
-                >
-                  {isGeneratingImage ? (
-                    <>
-                      <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon className="mr-2 h-4 w-4" />
-                      Generate & Add Image
-                    </>
-                  )}
-                </Button>
-              </div>
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
+            </Tabs>
+          )}
         </>
       )}
     </div>
