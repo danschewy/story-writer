@@ -335,7 +335,7 @@ export function StorySession({ session, sessionId }: StorySessionProps) {
         <CompletedStoryView story={localSession} />
       ) : (
         <>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-col">
             <h1 className="text-3xl font-bold text-amber-900">
               {localSession.title}
             </h1>

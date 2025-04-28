@@ -2,70 +2,22 @@
 
 import { LoginButton } from "@/components/login-button";
 import { BookOpen, Feather, Users } from "lucide-react";
-import { useEffect, useState, Suspense } from "react";
-import { supabase } from "@/lib/supabase";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
 
 function HomeContent() {
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect");
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function checkAuth() {
-      try {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-
-        if (!isMounted) return;
-
-        if (error) {
-          console.error("Home: getUser error", error);
-          setLoading(false);
-          return;
-        }
-
-        if (user) {
-          console.log(
-            "Home: Valid user found, redirecting to",
-            redirectUrl || "/dashboard"
-          );
-          router.replace(redirectUrl || "/dashboard");
-        } else {
-          console.log("Home: No valid user, showing login");
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error("Home: Error in checkAuth:", error);
-        setLoading(false);
-      }
+    if (!loading && user) {
+      router.replace(redirectUrl || "/dashboard");
     }
-
-    checkAuth();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!isMounted) return;
-
-      if (session) {
-        router.replace(redirectUrl || "/dashboard");
-      } else {
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, [router, redirectUrl]);
+  }, [user, loading, router, redirectUrl]);
 
   if (loading) {
     return (
@@ -152,15 +104,5 @@ function HomeContent() {
 }
 
 export default function Home() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen flex-col items-center justify-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-        </div>
-      }
-    >
-      <HomeContent />
-    </Suspense>
-  );
+  return <HomeContent />;
 }

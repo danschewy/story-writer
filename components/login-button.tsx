@@ -2,46 +2,17 @@
 
 import { Button } from "@/components/ui/button";
 import { LogIn, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { FcGoogle } from "react-icons/fc";
+import { useAuth } from "@/lib/auth-context";
 
 interface LoginButtonProps {
   size?: "default" | "sm" | "lg" | "icon";
 }
 
 export function LoginButton({ size = "default" }: LoginButtonProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  const { user, loading, signIn, signOut } = useAuth();
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setIsLoading(false);
-      if (user) {
-        router.push("/dashboard");
-      }
-    });
-  }, [router]);
-
-  const handleLogin = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) {
-        console.error("Error signing in:", error);
-      }
-    } catch (error) {
-      console.error("Error signing in:", error);
-    }
-  };
-
-  if (isLoading) {
+  if (loading) {
     return (
       <Button
         variant="outline"
@@ -54,11 +25,25 @@ export function LoginButton({ size = "default" }: LoginButtonProps) {
     );
   }
 
+  if (user) {
+    return (
+      <Button
+        variant="outline"
+        size={size}
+        onClick={signOut}
+        className="border-amber-200 hover:bg-amber-50"
+      >
+        <LogOut className="mr-2 h-5 w-5" />
+        Sign out
+      </Button>
+    );
+  }
+
   return (
     <Button
       variant="outline"
       size={size}
-      onClick={handleLogin}
+      onClick={signIn}
       className="border-amber-200 hover:bg-amber-50"
     >
       <FcGoogle className="mr-2 h-5 w-5" />

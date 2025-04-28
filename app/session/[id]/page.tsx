@@ -36,6 +36,8 @@ export default function SessionPage({ params }: SessionPageProps) {
           .eq("id", resolvedParams.id)
           .single();
 
+        if (!isMounted) return;
+
         if (sessionError) {
           console.error(
             `[SessionPage ${effectRunId}] Session error:`,
@@ -46,14 +48,25 @@ export default function SessionPage({ params }: SessionPageProps) {
           return;
         }
 
+        // Get the full session data first
+        const fullSessionData = await getSessionAction(resolvedParams.id);
+
+        if (!isMounted) return;
+
+        if (!fullSessionData) {
+          console.error(
+            `[SessionPage ${effectRunId}] Session not found or access denied`
+          );
+          setError("Session not found or you don't have access to it.");
+          setLoading(false);
+          return;
+        }
+
         // If the session is complete, allow public access
         if (sessionInfo.is_complete) {
-          const fullSessionData = await getSessionAction(resolvedParams.id);
-          if (fullSessionData) {
-            setStorySession(fullSessionData);
-            setLoading(false);
-            return;
-          }
+          setStorySession(fullSessionData);
+          setLoading(false);
+          return;
         }
 
         // For incomplete sessions, check authentication
@@ -61,6 +74,8 @@ export default function SessionPage({ params }: SessionPageProps) {
           data: { user },
           error: authError,
         } = await supabase.auth.getUser();
+
+        if (!isMounted) return;
 
         if (authError) {
           console.error(`[SessionPage ${effectRunId}] Auth error:`, authError);
@@ -72,18 +87,6 @@ export default function SessionPage({ params }: SessionPageProps) {
         if (!user) {
           console.error(`[SessionPage ${effectRunId}] No user found`);
           setError("Please log in to access this session.");
-          setLoading(false);
-          return;
-        }
-
-        // Check if session exists and user has access
-        const fullSessionData = await getSessionAction(resolvedParams.id);
-
-        if (!fullSessionData) {
-          console.error(
-            `[SessionPage ${effectRunId}] Session not found or access denied`
-          );
-          setError("Session not found or you don't have access to it.");
           setLoading(false);
           return;
         }
@@ -103,14 +106,14 @@ export default function SessionPage({ params }: SessionPageProps) {
         }
 
         // If all checks pass, update the session data
-        if (isMounted) {
-          setStorySession(fullSessionData);
-          setLoading(false);
-        }
+        setStorySession(fullSessionData);
+        setLoading(false);
       } catch (error) {
         console.error(`[SessionPage ${effectRunId}] Unexpected error:`, error);
-        setError("An unexpected error occurred. Please try again.");
-        setLoading(false);
+        if (isMounted) {
+          setError("An unexpected error occurred. Please try again.");
+          setLoading(false);
+        }
       }
     }
 
