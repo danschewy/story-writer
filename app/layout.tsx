@@ -10,8 +10,6 @@ export const metadata = {
   title: "StoryForge - Collaborative Story Writing",
   description: "Write stories together with friends and AI assistance",
   generator: "v0.dev",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
-  themeColor: "#fef3c7",
 };
 
 export default function RootLayout({
@@ -22,8 +20,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content={metadata.viewport} />
-        <meta name="theme-color" content={metadata.themeColor} />
+        <meta
+          name="viewport"
+          content={"width=device-width, initial-scale=1, maximum-scale=1"}
+        />
+        <meta name="theme-color" content={"#fef3c7"} />
       </head>
       <body
         className={`${inter.className} bg-gradient-to-b from-amber-100 via-amber-50 to-orange-100 min-h-screen`}

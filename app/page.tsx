@@ -27,6 +27,8 @@ function HomeContent() {
 
         if (error) {
           console.error("Home: getUser error", error);
+          setLoading(false);
+          return;
         }
 
         if (user) {
@@ -34,11 +36,11 @@ function HomeContent() {
             "Home: Valid user found, redirecting to",
             redirectUrl || "/dashboard"
           );
-          router.push(redirectUrl || "/dashboard");
+          router.replace(redirectUrl || "/dashboard");
         } else {
           console.log("Home: No valid user, showing login");
+          setLoading(false);
         }
-        setLoading(false);
       } catch (error) {
         console.error("Home: Error in checkAuth:", error);
         setLoading(false);
@@ -53,17 +55,9 @@ function HomeContent() {
       if (!isMounted) return;
 
       if (session) {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-        if (!error && user) {
-          console.log(
-            "Home: onAuthStateChange - signed in, redirecting to",
-            redirectUrl || "/dashboard"
-          );
-          router.push(redirectUrl || "/dashboard");
-        }
+        router.replace(redirectUrl || "/dashboard");
+      } else {
+        setLoading(false);
       }
     });
 
