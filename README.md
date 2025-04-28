@@ -23,6 +23,9 @@ StoryHearth is a collaborative storytelling platform where users can create and 
 
 ## Getting Started
 
+<img width="504" alt="image" src="https://github.com/user-attachments/assets/7acea138-8f5a-4e74-95b2-0c50d2df056d" />
+
+
 ### Prerequisites
 
 - Node.js 18+
